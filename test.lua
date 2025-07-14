@@ -1,7 +1,11 @@
 local player = game.Players.LocalPlayer
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "TestCheatGUI"
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- Предположим, у тебя есть такие RemoteEvents
+local spendGemsEvent = ReplicatedStorage:WaitForChild("SpendGems")
+local spendTrophiesEvent = ReplicatedStorage:WaitForChild("SpendTrophies")
+
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 250, 0, 120)
 frame.Position = UDim2.new(0, 100, 0, 100)
@@ -17,22 +21,10 @@ local function createButton(text, y, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
-createButton("Добавить 10000 гемов", 10, function()
-    local ls = player:FindFirstChild("leaderstats")
-    if ls then
-        local gems = ls:FindFirstChild("Gems")
-        if gems then
-            gems.Value = gems.Value + 10000
-        end
-    end
+createButton("Потратить 100 гемов", 10, function()
+    spendGemsEvent:FireServer(100)
 end)
 
-createButton("Добавить 5000 трофеев", 60, function()
-    local ls = player:FindFirstChild("leaderstats")
-    if ls then
-        local trophies = ls:FindFirstChild("Trophies")
-        if trophies then
-            trophies.Value = trophies.Value + 5000
-        end
-    end
+createButton("Потратить 50 трофеев", 60, function()
+    spendTrophiesEvent:FireServer(50)
 end)
