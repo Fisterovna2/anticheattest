@@ -1,69 +1,38 @@
--- Clash Royale but Roblox - Test Cheat by Fisterovna2
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "TestCheatGUI"
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TestCheatGUI"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 250, 0, 120)
+frame.Position = UDim2.new(0, 100, 0, 100)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 300, 0, 200)
-Frame.Position = UDim2.new(0, 100, 0, 100)
-Frame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-Frame.Parent = ScreenGui
-
-local function CreateButton(name, posY, callback)
-    local Button = Instance.new("TextButton")
-    Button.Text = name
-    Button.Size = UDim2.new(0, 280, 0, 40)
-    Button.Position = UDim2.new(0, 10, 0, posY)
-    Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Button.Parent = Frame
-    Button.MouseButton1Click:Connect(callback)
+local function createButton(text, y, callback)
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(0, 230, 0, 40)
+    btn.Position = UDim2.new(0, 10, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Text = text
+    btn.MouseButton1Click:Connect(callback)
 end
 
-CreateButton("Добавить 10000 гемов", 10, function()
-    local player = game.Players.LocalPlayer
-    local leaderstats = player:FindFirstChild("leaderstats")
-    if leaderstats then
-        local gems = leaderstats:FindFirstChild("Gems")
+createButton("Добавить 10000 гемов", 10, function()
+    local ls = player:FindFirstChild("leaderstats")
+    if ls then
+        local gems = ls:FindFirstChild("Gems")
         if gems then
             gems.Value = gems.Value + 10000
         end
     end
 end)
 
-CreateButton("Добавить 5000 трофеев", 55, function()
-    local player = game.Players.LocalPlayer
-    local leaderstats = player:FindFirstChild("leaderstats")
-    if leaderstats then
-        local trophies = leaderstats:FindFirstChild("Trophies")
+createButton("Добавить 5000 трофеев", 60, function()
+    local ls = player:FindFirstChild("leaderstats")
+    if ls then
+        local trophies = ls:FindFirstChild("Trophies")
         if trophies then
             trophies.Value = trophies.Value + 5000
-        end
-    end
-end)
-
-CreateButton("Бесконечный эликсир", 100, function()
-    local player = game.Players.LocalPlayer
-    local backpack = player:FindFirstChild("Backpack") or player:WaitForChild("Backpack")
-    local elixir = backpack:FindFirstChild("Elixir")
-    if elixir then
-        elixir.Value = 999
-    end
-end)
-
-CreateButton("Вкл/Выкл Автоспавн PEKKA", 145, function()
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local Remote = ReplicatedStorage:FindFirstChild("SpawnCard")
-    if not Remote then return end
-
-    if _G.Spawning then
-        _G.Spawning = false
-    else
-        _G.Spawning = true
-        while _G.Spawning do
-            Remote:FireServer("Pekka")
-            wait(1)
         end
     end
 end)
