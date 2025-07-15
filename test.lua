@@ -1,12 +1,46 @@
-local player = game.Players.LocalPlayer
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- 🔥 Full Remote Hook + Manual Replay by Fisterovna2
 
--- Создаём GUI
+local lastRemote = nil
+local lastMethod = nil
+local lastArgs = {}
+
+-- Хук __namecall
+local oldNamecall
+oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+
+    if method == "FireServer" or method == "InvokeServer" then
+        if typeof(self) == "Instance" then
+            print("=== Remote вызван ===")
+            print("Тип:", self.ClassName)
+            print("Имя:", self:GetFullName())
+            print("Метод:", method)
+            print("Аргументы:")
+            for i, v in pairs(args) do
+                print("["..i.."]: ", v)
+            end
+            print("=====================")
+
+            -- Запоминаем последний вызов
+            lastRemote = self
+            lastMethod = method
+            lastArgs = args
+        end
+    end
+
+    return oldNamecall(self, ...)
+end)
+
+-- 🔍 Мини GUI для повторного вызова
+
+local player = game.Players.LocalPlayer
+
 local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-ScreenGui.Name = "RemoteEventTesterGUI"
+ScreenGui.Name = "RemoteReplayGUI"
 
 local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 400, 0, 300)
+Frame.Size = UDim2.new(0, 300, 0, 150)
 Frame.Position = UDim2.new(0, 100, 0, 100)
 Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 Frame.Active = true
@@ -16,114 +50,44 @@ local Title = Instance.new("TextLabel", Frame)
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Title.TextColor3 = Color3.new(1, 1, 1)
-Title.Text = "RemoteEvent Tester"
+Title.Text = "🔥 Remote Replay"
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 18
 Title.BorderSizePixel = 0
 
--- Список RemoteEvents
-local ListFrame = Instance.new("ScrollingFrame", Frame)
-ListFrame.Size = UDim2.new(0, 180, 1, -60)
-ListFrame.Position = UDim2.new(0, 10, 0, 40)
-ListFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ListFrame.ScrollBarThickness = 8
-ListFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-ListFrame.BorderSizePixel = 0
-
--- Список кнопок для RemoteEvents
-local UIListLayout = Instance.new("UIListLayout", ListFrame)
-UIListLayout.Padding = UDim.new(0, 5)
-
-local RemoteEvents = {}
-
--- Функция для сбора RemoteEvents из ReplicatedStorage
-local function CollectRemoteEvents()
-    for _, obj in pairs(ReplicatedStorage:GetChildren()) do
-        if obj:IsA("RemoteEvent") then
-            table.insert(RemoteEvents, obj)
-        end
-    end
-end
-
-CollectRemoteEvents()
-
--- Считаем кнопки для списка
-local function UpdateCanvasSize()
-    ListFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
-end
-
--- Переменная для выбранного RemoteEvent
-local selectedRemote = nil
-
--- Создаем кнопки для всех RemoteEvents
-for i, remote in ipairs(RemoteEvents) do
-    local btn = Instance.new("TextButton", ListFrame)
-    btn.Size = UDim2.new(1, -10, 0, 30)
-    btn.Text = remote.Name
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 16
-    btn.BorderSizePixel = 0
-
-    btn.MouseButton1Click:Connect(function()
-        selectedRemote = remote
-        SelectedLabel.Text = "Выбран: " .. remote.Name
-    end)
-end
-
-UpdateCanvasSize()
-
--- Метка для выбранного RemoteEvent
-local SelectedLabel = Instance.new("TextLabel", Frame)
-SelectedLabel.Size = UDim2.new(0, 200, 0, 25)
-SelectedLabel.Position = UDim2.new(0, 200, 0, 50)
-SelectedLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SelectedLabel.TextColor3 = Color3.new(1, 1, 1)
-SelectedLabel.Text = "Выбран: Нет"
-SelectedLabel.Font = Enum.Font.SourceSansItalic
-SelectedLabel.TextSize = 14
-SelectedLabel.BorderSizePixel = 0
-SelectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-
--- Текстбокс для аргументов (через запятую)
 local ArgsBox = Instance.new("TextBox", Frame)
-ArgsBox.Size = UDim2.new(0, 180, 0, 25)
-ArgsBox.Position = UDim2.new(0, 200, 0, 80)
+ArgsBox.Size = UDim2.new(0, 280, 0, 30)
+ArgsBox.Position = UDim2.new(0, 10, 0, 40)
 ArgsBox.PlaceholderText = "Аргументы через запятую"
-ArgsBox.ClearTextOnFocus = false
 ArgsBox.Text = ""
+ArgsBox.ClearTextOnFocus = false
 ArgsBox.TextColor3 = Color3.new(1, 1, 1)
 ArgsBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 ArgsBox.Font = Enum.Font.SourceSans
 ArgsBox.TextSize = 14
 ArgsBox.BorderSizePixel = 0
 
--- Кнопка вызова RemoteEvent
-local CallBtn = Instance.new("TextButton", Frame)
-CallBtn.Size = UDim2.new(0, 180, 0, 35)
-CallBtn.Position = UDim2.new(0, 200, 0, 115)
-CallBtn.Text = "Вызвать событие"
-CallBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-CallBtn.TextColor3 = Color3.new(1, 1, 1)
-CallBtn.Font = Enum.Font.SourceSansBold
-CallBtn.TextSize = 16
-CallBtn.BorderSizePixel = 0
+local ReplayBtn = Instance.new("TextButton", Frame)
+ReplayBtn.Size = UDim2.new(0, 280, 0, 40)
+ReplayBtn.Position = UDim2.new(0, 10, 0, 80)
+ReplayBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+ReplayBtn.TextColor3 = Color3.new(1, 1, 1)
+ReplayBtn.Font = Enum.Font.SourceSansBold
+ReplayBtn.TextSize = 16
+ReplayBtn.BorderSizePixel = 0
+ReplayBtn.Text = "🔁 Повторить последний вызов"
 
-CallBtn.MouseButton1Click:Connect(function()
-    if not selectedRemote then
-        warn("RemoteEvent не выбран")
+ReplayBtn.MouseButton1Click:Connect(function()
+    if not lastRemote then
+        warn("Нет последнего Remote!")
         return
     end
 
-    local argsText = ArgsBox.Text
+    -- Разбираем новые аргументы, если введены
     local args = {}
-
-    if argsText ~= "" then
-        for arg in string.gmatch(argsText, '([^,]+)') do
-            arg = arg:match("^%s*(.-)%s*$") -- убрать пробелы
-
-            -- Пытаемся привести к числу, если возможно
+    if ArgsBox.Text ~= "" then
+        for arg in string.gmatch(ArgsBox.Text, '([^,]+)') do
+            arg = arg:match("^%s*(.-)%s*$")
             local num = tonumber(arg)
             if num then
                 table.insert(args, num)
@@ -132,19 +96,34 @@ CallBtn.MouseButton1Click:Connect(function()
             elseif arg:lower() == "false" then
                 table.insert(args, false)
             else
-                table.insert(args, arg) -- строка
+                table.insert(args, arg)
             end
         end
+    else
+        args = lastArgs -- Если пусто — используем оригинал
     end
 
-    -- Попытка вызвать событие
     local success, err = pcall(function()
-        selectedRemote:FireServer(unpack(args))
+        if lastMethod == "FireServer" then
+            lastRemote:FireServer(unpack(args))
+        elseif lastMethod == "InvokeServer" then
+            lastRemote:InvokeServer(unpack(args))
+        end
     end)
 
     if success then
-        print("RemoteEvent "..selectedRemote.Name.." вызван с аргументами:", unpack(args))
+        print("✅ Вызван:", lastRemote:GetFullName(), " с аргументами:", unpack(args))
     else
-        warn("Ошибка при вызове:", err)
+        warn("❌ Ошибка при вызове:", err)
     end
 end)
+
+local InfoLabel = Instance.new("TextLabel", Frame)
+InfoLabel.Size = UDim2.new(0, 280, 0, 25)
+InfoLabel.Position = UDim2.new(0, 10, 0, 125)
+InfoLabel.Text = "Найди вызов => Измени => Повтори"
+InfoLabel.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+InfoLabel.TextColor3 = Color3.new(1, 1, 1)
+InfoLabel.Font = Enum.Font.SourceSans
+InfoLabel.TextSize = 14
+InfoLabel.BorderSizePixel = 0
